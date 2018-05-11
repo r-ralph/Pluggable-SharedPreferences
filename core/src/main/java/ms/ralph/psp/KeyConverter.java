@@ -18,7 +18,7 @@ package ms.ralph.psp;
 
 import android.support.annotation.NonNull;
 
-public interface Converter {
+public interface KeyConverter {
     @NonNull
     String convert(@NonNull String s);
 }

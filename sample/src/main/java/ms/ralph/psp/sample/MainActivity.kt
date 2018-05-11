@@ -1,10 +1,10 @@
 package ms.ralph.psp.sample
 
 import android.content.Context
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.util.Base64
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_main.text
 import ms.ralph.psp.PluggableSharedPreferences
 
 class MainActivity : AppCompatActivity() {
@@ -15,14 +15,21 @@ class MainActivity : AppCompatActivity() {
         val sp = applicationContext.getSharedPreferences("test", Context.MODE_PRIVATE)
 
         val p = PluggableSharedPreferences.Builder(sp)
-                .encoder { Base64.encodeToString(it.toByteArray(Charsets.UTF_8), Base64.NO_WRAP) }
-                .decoder { Base64.decode(it, Base64.NO_WRAP).toString(Charsets.UTF_8) }
-                .build()
+            .keyEncoder { Base64.encodeToString(it.toByteArray(Charsets.UTF_8), Base64.NO_WRAP) }
+            .keyDecoder { Base64.decode(it, Base64.NO_WRAP).toString(Charsets.UTF_8) }
+            .valueEncoder { _, v ->
+                Base64.encodeToString(
+                    v.toByteArray(Charsets.UTF_8),
+                    Base64.NO_WRAP
+                )
+            }
+            .valueDecoder { _, v -> Base64.decode(v, Base64.NO_WRAP).toString(Charsets.UTF_8) }
+            .build()
 
         p.edit().putString("key1", "hoge")
-                .putInt("key2", 68)
-                .putBoolean("key3", true)
-                .commit()
+            .putInt("key2", 68)
+            .putBoolean("key3", true)
+            .commit()
 
         text.text = "original:\n" +
                 " key1: hoge\n" +

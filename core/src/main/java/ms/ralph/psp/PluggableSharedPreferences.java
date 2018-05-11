@@ -29,18 +29,18 @@ import java.util.Set;
 
 public class PluggableSharedPreferences implements SharedPreferences {
 
-    private final Converter keyEncoder;
-    private final Converter keyDecoder;
-    private final Converter valueEncoder;
-    private final Converter valueDecoder;
+    private final KeyConverter keyEncoder;
+    private final KeyConverter keyDecoder;
+    private final ValueConverter valueEncoder;
+    private final ValueConverter valueDecoder;
 
     private final SharedPreferences base;
 
     private final IdentityHashMap<OnSharedPreferenceChangeListener, OnSharedPreferenceChangeListener> dummyListeners = new IdentityHashMap<>();
 
     private PluggableSharedPreferences(@NonNull SharedPreferences base,
-                                       @NonNull Converter keyEncoder, @NonNull Converter keyDecoder,
-                                       @NonNull Converter valueEncoder, @NonNull Converter valueDecoder) {
+                                       @NonNull KeyConverter keyEncoder, @NonNull KeyConverter keyDecoder,
+                                       @NonNull ValueConverter valueEncoder, @NonNull ValueConverter valueDecoder) {
         this.base = base;
         this.keyEncoder = keyEncoder;
         this.keyDecoder = keyDecoder;
@@ -55,7 +55,7 @@ public class PluggableSharedPreferences implements SharedPreferences {
             String originalKey = keyDecoder.convert(entry.getKey());
             if (entry.getValue() != null) {
                 String encrypted = (String) entry.getValue();
-                map.put(originalKey, valueDecoder.convert(encrypted));
+                map.put(originalKey, valueDecoder.convert(entry.getKey(), encrypted));
             } else {
                 map.put(originalKey, null);
             }
@@ -68,7 +68,7 @@ public class PluggableSharedPreferences implements SharedPreferences {
     public String getString(String key, String defValue) {
         String encodedKey = keyEncoder.convert(key);
         String encoded = base.getString(encodedKey, null);
-        return encoded != null ? valueDecoder.convert(encoded) : defValue;
+        return encoded != null ? valueDecoder.convert(key, encoded) : defValue;
     }
 
     @Override
@@ -80,7 +80,7 @@ public class PluggableSharedPreferences implements SharedPreferences {
         }
         HashSet<String> set = new HashSet<>();
         for (String s : encoded) {
-            set.add(valueDecoder.convert(s));
+            set.add(valueDecoder.convert(key, s));
         }
         return Collections.unmodifiableSet(set);
     }
@@ -160,7 +160,7 @@ public class PluggableSharedPreferences implements SharedPreferences {
         @Override
         public Editor putString(String key, @Nullable String value) {
             String encodedKey = keyEncoder.convert(key);
-            editor.putString(encodedKey, value != null ? valueEncoder.convert(value) : null);
+            editor.putString(encodedKey, value != null ? valueEncoder.convert(key, value) : null);
             return this;
         }
 
@@ -173,7 +173,7 @@ public class PluggableSharedPreferences implements SharedPreferences {
             }
             HashSet<String> set = new HashSet<>();
             for (String s : values) {
-                set.add(valueEncoder.convert(s));
+                set.add(valueEncoder.convert(encodedKey, s));
             }
             editor.putStringSet(encodedKey, set);
             return this;
@@ -226,50 +226,36 @@ public class PluggableSharedPreferences implements SharedPreferences {
 
         private final SharedPreferences base;
 
-        private Converter keyEncoder;
-        private Converter keyDecoder;
-        private Converter valueEncoder;
-        private Converter valueDecoder;
+        private KeyConverter keyEncoder;
+        private KeyConverter keyDecoder;
+        private ValueConverter valueEncoder;
+        private ValueConverter valueDecoder;
 
         public Builder(SharedPreferences base) {
             this.base = base;
         }
 
         @NonNull
-        public Builder keyEncoder(@NonNull Converter converter) {
+        public Builder keyEncoder(@NonNull KeyConverter converter) {
             keyEncoder = converter;
             return this;
         }
 
         @NonNull
-        public Builder keyDecoder(@NonNull Converter converter) {
+        public Builder keyDecoder(@NonNull KeyConverter converter) {
             keyDecoder = converter;
             return this;
         }
 
         @NonNull
-        public Builder valueEncoder(@NonNull Converter converter) {
+        public Builder valueEncoder(@NonNull ValueConverter converter) {
             valueEncoder = converter;
             return this;
         }
 
         @NonNull
-        public Builder valueDecoder(@NonNull Converter converter) {
+        public Builder valueDecoder(@NonNull ValueConverter converter) {
             valueDecoder = converter;
-            return this;
-        }
-
-        @NonNull
-        public Builder encoder(@NonNull Converter encoder) {
-            keyEncoder = encoder;
-            valueEncoder = encoder;
-            return this;
-        }
-
-        @NonNull
-        public Builder decoder(@NonNull Converter decoder) {
-            keyDecoder = decoder;
-            valueDecoder = decoder;
             return this;
         }
 
