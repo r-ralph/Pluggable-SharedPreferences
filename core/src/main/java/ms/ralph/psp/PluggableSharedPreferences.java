@@ -66,15 +66,15 @@ public class PluggableSharedPreferences implements SharedPreferences {
 
     @Override
     public String getString(String key, String defValue) {
-        String originalKey = keyEncoder.convert(key);
-        String encoded = base.getString(originalKey, null);
+        String encodedKey = keyEncoder.convert(key);
+        String encoded = base.getString(encodedKey, null);
         return encoded != null ? valueDecoder.convert(encoded) : defValue;
     }
 
     @Override
     public Set<String> getStringSet(String key, Set<String> defValues) {
-        String originalKey = keyEncoder.convert(key);
-        Set<String> encoded = base.getStringSet(originalKey, null);
+        String encodedKey = keyEncoder.convert(key);
+        Set<String> encoded = base.getStringSet(encodedKey, null);
         if (encoded == null) {
             return defValues;
         }
